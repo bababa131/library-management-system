@@ -1,6 +1,7 @@
 package com.inventory.ui;
 
 import com.inventory.entity.Book;
+import com.inventory.exception.StockShortageException;
 import com.inventory.service.BookService;
 
 import java.util.InputMismatchException;
@@ -40,10 +41,12 @@ public class LibraryConsoleUI {
                     case 4 -> searchByTitle();
                     case 5 -> updateBook();
                     case 6 -> removeBook();
+                    case 7 -> borrowBook();
+                    case 8 -> returnBook();
                     case 0 -> running = false;
                     default -> System.out.println("无效的操作编号，请重新选择！");
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | StockShortageException e) {
                 System.out.println("操作失败：" + e.getMessage());
             }
         }
@@ -121,6 +124,30 @@ public class LibraryConsoleUI {
         }
     }
 
+    private void borrowBook() throws StockShortageException {
+        System.out.println("---------- 借阅图书 ----------");
+        String isbn = readRequired("请输入要借阅的图书 ISBN：");
+        while (true) {
+            int quantity = readPositiveInt("请输入借阅数量：");
+            try {
+                bookService.borrow(isbn, quantity);
+                System.out.println("借阅成功！");
+                return;
+            } catch (StockShortageException e) {
+                // 库存不足：提示并循环让用户重新输入数量
+                System.out.println(e.getMessage() + "，请重新输入借阅数量！");
+            }
+        }
+    }
+
+    private void returnBook() {
+        System.out.println("---------- 归还图书 ----------");
+        String isbn = readRequired("请输入要归还的图书 ISBN：");
+        int quantity = readPositiveInt("请输入归还数量：");
+        bookService.returnBook(isbn, quantity);
+        System.out.println("归还成功！");
+    }
+
     // ==================== 展示与输入校验 ====================
 
     private void printMenu() {
@@ -132,6 +159,8 @@ public class LibraryConsoleUI {
         System.out.println("  4. 按书名模糊查询");
         System.out.println("  5. 修改图书信息");
         System.out.println("  6. 删除图书");
+        System.out.println("  7. 借阅图书");
+        System.out.println("  8. 归还图书");
         System.out.println("  0. 退出");
         System.out.println("================================================");
     }
@@ -212,6 +241,17 @@ public class LibraryConsoleUI {
                 return value;
             }
             System.out.println("数值不能为负数，请重新输入！");
+        }
+    }
+
+    /** 读取正整数（用于借阅 / 归还数量） */
+    private int readPositiveInt(String prompt) {
+        while (true) {
+            int value = readInt(prompt);
+            if (value > 0) {
+                return value;
+            }
+            System.out.println("数量必须为正整数，请重新输入！");
         }
     }
 }
