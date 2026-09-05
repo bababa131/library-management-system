@@ -23,7 +23,7 @@ public class LibraryConsoleUI {
         this.bookService = bookService;
     }
 
-    /** 启动菜单主循环 */
+    /** 启动菜单主循环，退出时返回（落盘由入口类的关闭钩子负责） */
     public void start() {
         System.out.println("==================================================");
         System.out.println("           欢迎使用图书管理系统 v1.0");
@@ -50,7 +50,7 @@ public class LibraryConsoleUI {
                 System.out.println("操作失败：" + e.getMessage());
             }
         }
-        System.out.println("感谢使用，再见！");
+        System.out.println("数据保存中……感谢使用，再见！");
     }
 
     // ==================== 菜单功能 ====================
@@ -161,7 +161,7 @@ public class LibraryConsoleUI {
         System.out.println("  6. 删除图书");
         System.out.println("  7. 借阅图书");
         System.out.println("  8. 归还图书");
-        System.out.println("  0. 退出");
+        System.out.println("  0. 保存并退出");
         System.out.println("================================================");
     }
 
@@ -179,13 +179,15 @@ public class LibraryConsoleUI {
         System.out.println("共 " + books.size() + " 条记录。");
     }
 
-    /** 读取非空字符串 */
+    /** 读取非空字符串，且不允许包含持久化分隔符 "|" */
     private String readRequired(String prompt) {
         while (true) {
             System.out.print(prompt);
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) {
                 System.out.println("输入不能为空，请重新输入！");
+            } else if (line.contains(Book.DELIMITER)) {
+                System.out.println("输入内容不能包含分隔符 '|'，请重新输入！");
             } else {
                 return line;
             }
