@@ -1,6 +1,7 @@
 package com.inventory.service;
 
 import com.inventory.entity.Book;
+import com.inventory.exception.StockShortageException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -88,6 +89,36 @@ public class BookService {
     /** 当前馆藏图书总数 */
     public int size() {
         return bookMap.size();
+    }
+
+    /**
+     * 借阅图书，成功后扣减库存
+     *
+     * @throws IllegalArgumentException 图书不存在或数量非法时抛出
+     * @throws StockShortageException 库存不足时抛出
+     */
+    public void borrow(String isbn, int quantity) throws StockShortageException {
+        Book book = requireBook(isbn);
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("借阅数量必须为正整数");
+        }
+        if (book.getStock() < quantity) {
+            throw new StockShortageException(quantity, book.getStock());
+        }
+        book.setStock(book.getStock() - quantity);
+    }
+
+    /**
+     * 归还图书，成功后回补库存
+     *
+     * @throws IllegalArgumentException 图书不存在或数量非法时抛出
+     */
+    public void returnBook(String isbn, int quantity) {
+        Book book = requireBook(isbn);
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("归还数量必须为正整数");
+        }
+        book.setStock(book.getStock() + quantity);
     }
 
     private Book requireBook(String isbn) {
