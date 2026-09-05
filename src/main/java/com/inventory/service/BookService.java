@@ -1,5 +1,6 @@
 package com.inventory.service;
 
+import com.inventory.dao.BookDao;
 import com.inventory.entity.Book;
 import com.inventory.exception.StockShortageException;
 
@@ -19,6 +20,16 @@ public class BookService {
 
     /** ISBN -> 图书，O(1) 精准定位 */
     private final Map<String, Book> bookMap = new HashMap<>();
+
+    private final BookDao bookDao;
+
+    public BookService(BookDao bookDao) {
+        this.bookDao = bookDao;
+        // 程序启动时从本地文件加载历史数据
+        for (Book book : bookDao.loadAll()) {
+            bookMap.put(book.getIsbn(), book);
+        }
+    }
 
     /**
      * 添加图书
@@ -86,11 +97,6 @@ public class BookService {
         return result;
     }
 
-    /** 当前馆藏图书总数 */
-    public int size() {
-        return bookMap.size();
-    }
-
     /**
      * 借阅图书，成功后扣减库存
      *
@@ -119,6 +125,16 @@ public class BookService {
             throw new IllegalArgumentException("归还数量必须为正整数");
         }
         book.setStock(book.getStock() + quantity);
+    }
+
+    /** 当前馆藏图书总数 */
+    public int size() {
+        return bookMap.size();
+    }
+
+    /** 将内存数据全量落盘 */
+    public void save() {
+        bookDao.saveAll(bookMap.values());
     }
 
     private Book requireBook(String isbn) {
